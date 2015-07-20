@@ -1,0 +1,151 @@
+clear all; close all; clc;
+L=1; % Length along x direction
+H=0.05; %Distance between top and bottom planes
+h=0.1; % Surface heat transfer coefficient at the waveguide and air interface
+t=15;% time stepping for the finite difference code
+nBP=[0 1]; % Normal to the bottom plate (direction vector) indicating -Z direction
+nTP=[0 -1]; % Normal to the top plate (direction vector) indicicating +Z direction 
+eps1=0.2; % Emissivity of the 1st body (bottom plane) 
+rho2=1; % Reflectivity of the 2nd body (Top plane bottom side) 
+precision=1e-06; % Precision to test the accuracy (Mostly not used, useful in the debugging mode)  
+tophits=zeros(); % matrix to record the absorption points 
+firsthits=zeros(); % matrix to record the first tophits (tophits on the top plne on the top side, packets which are absorbed direction before undergoing any reflection or emission)
+received=zeros(); % end wall tophits (direct transported radiation to the side walls in this case, the receivers)
+bottomsurface=zeros(); % energy bundles tracked on the bttom surface of the waveguide. these will count towardss the conduction heat transfer
+rg=1; % counter for direction radiation
+bg=1; % counter for bottom absorbed rays count
+tg=1; %counter for top absorptions 
+incident=zeros(); % count for storing location of the incident rays to test if the random numbers generated are truly random or not
+v=1; % ray counter 
+xmin=-L; % bounds of the waveguide
+xmax=L;
+ymin=-H;
+ymax=H;
+nrays=1000; % number of rays to be traced
+for i=1:1:nrays %number of rays
+    close all;
+    X=xmin+(rand*(xmax-xmin));
+    Y=H;
+    incident(v,1)=X;
+    incident(v,2)=Y;
+    scatter(X,Y,'y');
+    hold on;
+%     pause;
+    v=v+1;
+    N=determine_direction_of_emission(Y,precision,H);
+    Pi=determine_point_of_intersection(N,X,Y,H,L);
+    scatter(Pi(:,1),Pi(:,2),'r');
+    hold on;
+%     pause;
+    if(Pi(3)==3)
+        	received(rg,1)=Pi(1);
+            received(rg,2)=Pi(2);
+            rg=rg+1;
+    elseif(Pi(3)==1)
+        absrb=rand;
+        if(absrb<eps1)
+            bottomsurface(bg,1)=Pi(1);
+            bottomsurface(bg,2)=Pi(2);
+            bg=bg+1;
+        else
+        Ns=determine_direction_of_emission(Pi(2),precision,H);
+        Pinew=determine_point_of_intersection(Ns,Pi(1),Pi(2),H,L);
+        scatter(Pinew(:,1),Pinew(:,2),'b');
+    hold on;
+%     pause;
+            while (1)
+                if (Pinew(3)==3)
+                received(rg,1)=Pinew(1);
+                received(rg,2)=Pinew(2);
+                rg=rg+1;
+                break;
+                elseif(Pinew(3)==2)
+                    absrb=rand;
+                    if (absrb<(1-rho2))
+                    tophits(tg,1)=Pinew(1);
+                    tophits(tg,2)=Pinew(2);
+                    tg=tg+1;  
+                    break;
+                    else
+                        Ns=determine_specular_direction(nTP,Pinew,Pi(1),Pi(2));
+                        
+                        Pinew=determine_point_of_intersection(Ns,Pinew(1),Pinew(2),H,L);
+                        scatter(Pinew(:,1),Pinew(:,2),'g');
+    hold on;
+%     pause;
+                    end
+                elseif(Pinew(3)==1)
+                    absrb=rand;
+                    if (absrb<eps1)
+                    bottomsurface(bg,1)=Pinew(1);
+                    bottomsurface(bg,2)=Pinew(2);
+                    bg=bg+1;
+                    break;
+                    else
+                    Pi=Pinew;
+                    Ns=determine_direction_of_emission(Pinew(2),precision,H);
+                    Pinew=determine_point_of_intersection(Ns,Pinew(1),Pinew(2),H,L);
+                    Pinew2=Pinew;
+                    scatter(Pinew(:,1),Pinew(:,2),'k');
+    hold on;
+    
+    
+    
+    
+    
+                    end
+                end
+
+                
+                
+            end
+        end
+    end
+end
+scatter(received(:,1),received(:,2),'b');
+hold on;
+% scatter3(lateralwalls(:,1),lateralwalls(:,2),lateralwalls(:,3),'k');
+% hold on;
+% scatter3(tophits(:,1),tophits(:,2),tophits(:,3));
+% hold on;
+scatter(incident(:,1),incident(:,2),'r');
+hold on;
+scatter(bottomsurface(:,1),bottomsurface(:,2),'g');
+hold off;
+% % axis([-L L -B B -H H]);
+% hold on;
+% 
+n=51;
+B=1;
+% %
+H=[bottomsurface(:,1),bottomsurface(:,2)];
+[N,C]=hist(H,n-1);
+e=N(:,1);
+e=e.*(1000*L*B/nrays);
+%%
+length=L;
+m=n-1;
+a=5.20833e-07;
+x=length/m;
+alpha=a*t;
+R=0.1;
+j=1;
+T=ones(n,2);
+T=250*T;
+T(1,1)=273;
+T(1,2)=273;
+T(n,1)=273;
+T(n,2)=273;
+while (R>0.00000001)
+    for i=2:1:n-1
+    T(i,2)=alpha*(((T(i+1,1)-(2*T(i,1))+T(i-1,1))/(x*x))+e(i)-(h*x*B*(T(i,1)-298)))+T(i,1);
+    res(i)=t*(T(i,2)-T(i,1));
+    end
+    R=max(res);
+    for i=1:1:n
+    T(i,1)=T(i,2);
+end
+j=j+1;
+end
+Tlength=T(:,2)-273
+size(received)
