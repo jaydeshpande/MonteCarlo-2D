@@ -1,0 +1,17 @@
+function [Ns]=determine_specular_direction(nTP,Pi,X,Y)
+Vi=[(Pi(1)-X) (Pi(2)-Y)];
+modVi=sqrt((Vi(1)^2)+(Vi(2)^2));
+modn=sqrt((nTP(1)^2)+(nTP(2)^2));
+thetanum=(Vi(1)*nTP(1))+(Vi(2)*nTP(2));
+thetaden=modVi*modn;
+costheta=thetanum/thetaden;
+theta=acos(costheta);
+coeff=(2*modVi*cos(theta));
+Vr2=[(coeff*nTP(1)) (coeff*nTP(2))];
+Vr=Vi+Vr2;
+Tr=sqrt((Vr(1)^2)+(Vr(2)^2));
+Vr = Vi - (2*(thetanum)*nTP);
+l=Vr(1)/Tr;
+m=Vr(2)/Tr;
+Ns=[l m];
+end
