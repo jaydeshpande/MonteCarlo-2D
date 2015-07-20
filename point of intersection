@@ -1,0 +1,67 @@
+function [Pi]=determine_point_of_intersection(N,X,Y,H,L)
+dist=zeros();
+st=zeros();
+precision=1e-06;
+k=1;
+% Bottom Plane
+t=(-H-Y)/N(2);
+Y1=-H;
+X1=X+(N(1)*t);
+prod=(Y1-Y)*(-1);  %% dot product taking into account emission from top plane only!!!! Add additional code for surfaces
+w=sqrt((X1-X)^2 + (Y1-Y)^2);
+if (w>0) && (prod>0) && (X1<=L) && (X1>=-L)
+dist(k)=w;
+st(k,1)=X1; 
+st(k,2)=Y1;
+st(k,3)=1;
+k=k+1;
+end
+% Top Plane
+t=(H-Y)/N(2);
+Y1=H;
+X1=X+(N(1)*t);
+prod=(Y1-Y);  %% dot product taking into account emission from top plane only!!!! Add additional code for surfaces
+w=sqrt((X1-X)^2 + (Y1-Y)^2);
+if (w>0) && (prod>0) && (X1<=L) && (X1>=-L)
+dist(k)=w;
+st(k,1)=X1; 
+st(k,2)=Y1;
+st(k,3)=2;
+k=k+1;
+end
+% Receiver
+t=(-L-X)/N(1);
+X1=-L;
+Y1=Y+(N(2)*t);
+if (Y==H)
+    prod=(Y1-Y)*(-1);
+elseif (Y==-H)
+    prod=(Y1-Y);
+end 
+w=sqrt((X1-X)^2 + (Y1-Y)^2);
+if (w>0) && (prod>0)&& (Y1<=H) && (Y1>=-H)
+dist(k)=w;
+st(k,1)=X1;
+st(k,2)=Y1;
+st(k,3)=3;
+k=k+1;
+end
+% Receiver 2
+t=(L-X)/N(1);
+X1=L;
+Y1=Y+(N(2)*t);
+if (Y==H)
+    prod=(Y1-Y)*(-1);
+elseif (Y==-H)
+    prod=(Y1-Y);
+end 
+w=sqrt((X1-X)^2 + (Y1-Y)^2);
+if (w>0) && (prod>0) && (Y1<=H) && (Y1>=-H)
+dist(k)=w;
+st(k,1)=X1;
+st(k,2)=Y1;
+st(k,3)=3;
+end
+[C,I]=min(dist);
+Pi=[st(I,1) st(I,2) st(I,3)];
+end
