@@ -1,0 +1,19 @@
+function [N]=determine_direction_of_emission(Y,precision,H)
+Rtheta=rand;
+theta=asin(sqrt(Rtheta));
+if (abs((Y+H)<precision))
+    nx=0;
+    ny=1;
+else
+    nx=0;
+    ny=-1;
+end
+if rand<0.5  
+    tx=-ny;
+else
+    tx=ny;
+end
+ty=0;
+l=(nx*cos(theta))+(tx*sin(theta));
+m=(ny*cos(theta))+(ty*sin(theta));
+N=[l m];
